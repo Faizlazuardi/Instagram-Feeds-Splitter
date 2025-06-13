@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IG Feed Splitter</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .preview {
+      border: 1px solid #ccc;
+      max-width: 100%;
+    }
+  </style>
+</head>
+<body class="flex flex-col justify-center items-center bg-gray-100 p-4 min-h-screen">
+  <div class="bg-white shadow-xl p-6 rounded-2xl w-full max-w-7xl">
+    <h1 class="mb-4 font-bold text-2xl text-center">IG Feed Splitter</h1>
+
+    <input type="file" id="imageInput" accept="image/*" class="mb-4 w-full" />
+    <div id="previewContainer" class="flex flex-col gap-6"></div>
+  </div>
+
+  <script>
+    const imageInput = document.getElementById('imageInput');
+    const previewContainer = document.getElementById('previewContainer');
+
+    const cropSpecs = [
+      { x: 0, width: 1080 },
+      { x: 1015, width: 1080 },
+      { x: 2030, width: 1080 }
+    ];
+
+    const cropHeight = 1350;
+
+    imageInput.addEventListener('change', function (e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      const image = new Image();
+
+      reader.onload = function (event) {
+        image.onload = function () {
+          previewContainer.innerHTML = '';
+
+          const rows = Math.ceil(image.height / cropHeight);
+          const totalParts = rows * cropSpecs.length;
+          let currentPart = totalParts;
+
+          for (let row = 0; row < rows; row++) {
+            const rowContainer = document.createElement('div');
+            rowContainer.className = 'flex flex-row justify-center gap-4';
+
+            for (let colIndex = cropSpecs.length - 1; colIndex >= 0; colIndex--) {
+              const spec = cropSpecs[colIndex];
+
+              const canvas = document.createElement('canvas');
+              const ctx = canvas.getContext('2d');
+
+              const actualHeight = Math.min(cropHeight, image.height - row * cropHeight);
+
+              canvas.width = spec.width;
+              canvas.height = actualHeight;
+
+              ctx.drawImage(
+                image,
+                spec.x,
+                row * cropHeight,
+                spec.width,
+                actualHeight,
+                0,
+                0,
+                spec.width,
+                actualHeight
+              );
+
+              canvas.classList.add('preview');
+
+              const container = document.createElement('div');
+              container.className = 'flex flex-col items-center';
+
+              const downloadBtn = document.createElement('button');
+              downloadBtn.textContent = `Download Feed ${currentPart}`;
+              downloadBtn.className = 'mt-2 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600';
+
+              downloadBtn.addEventListener('click', () => {
+                const partNumber = downloadBtn.textContent.match(/\d+$/)?.[0] || currentPart;
+                const link = document.createElement('a');
+                link.download = `Feed ${partNumber}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+              });
+
+              currentPart--;
+
+              container.appendChild(canvas);
+              container.appendChild(downloadBtn);
+              rowContainer.appendChild(container);
+            }
+
+            previewContainer.appendChild(rowContainer);
+          }
+        };
+        image.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  </script>
+</body>
+</html>
