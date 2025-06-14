@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>IG Feed Splitter</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
   <style>
     .preview {
       border: 1px solid #ccc;
@@ -24,10 +24,10 @@
     const imageInput = document.getElementById('imageInput');
     const previewContainer = document.getElementById('previewContainer');
 
-    const cropSpecs = [
-      { x: 0, width: 1080 },
-      { x: 1015, width: 1080 },
-      { x: 2030, width: 1080 }
+    const cropFrames = [
+      { startX: 0, width: 1080 },
+      { startX: 1015, width: 1080 },
+      { startX: 2030, width: 1080 }
     ];
 
     const cropHeight = 1350;
@@ -44,33 +44,34 @@
           previewContainer.innerHTML = '';
 
           const rows = Math.ceil(image.height / cropHeight);
-          const totalParts = rows * cropSpecs.length;
+          const cols = cropFrames.length
+          const totalParts = rows * cols;
           let currentPart = totalParts;
 
           for (let row = 0; row < rows; row++) {
             const rowContainer = document.createElement('div');
             rowContainer.className = 'flex flex-row justify-center gap-4';
 
-            for (let colIndex = 0; colIndex < cropSpecs.length; colIndex++) {
-              const spec = cropSpecs[colIndex];
+            for (let colIndex = 0; colIndex < cols; colIndex++) {
+              const frame = cropFrames[colIndex];
 
               const canvas = document.createElement('canvas');
               const ctx = canvas.getContext('2d');
 
               const actualHeight = Math.min(cropHeight, image.height - row * cropHeight);
 
-              canvas.width = spec.width;
+              canvas.width = frame.width;
               canvas.height = actualHeight;
 
               ctx.drawImage(
                 image,
-                spec.x,
+                frame.startX,
                 row * cropHeight,
-                spec.width,
+                frame.width,
                 actualHeight,
                 0,
                 0,
-                spec.width,
+                frame.width,
                 actualHeight
               );
 
@@ -84,9 +85,8 @@
               downloadBtn.className = 'mt-2 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600';
 
               downloadBtn.addEventListener('click', () => {
-                const partNumber = downloadBtn.textContent.match(/\d+$/)?.[0] || currentPart;
                 const link = document.createElement('a');
-                link.download = `Feed ${partNumber}.png`;
+                link.download = `Feed ${currentPart}.png`;
                 link.href = canvas.toDataURL('image/png');
                 link.click();
               });
