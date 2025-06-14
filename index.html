@@ -51,7 +51,7 @@
             const rowContainer = document.createElement('div');
             rowContainer.className = 'flex flex-row justify-center gap-4';
 
-            for (let colIndex = cropSpecs.length - 1; colIndex >= 0; colIndex--) {
+            for (let colIndex = 0; colIndex < cropSpecs.length; colIndex++) {
               const spec = cropSpecs[colIndex];
 
               const canvas = document.createElement('canvas');
